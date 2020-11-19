@@ -1,0 +1,100 @@
+---
+title: "week 6"
+author: "Roshni Katrak-Adefowora"
+date: "11/18/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(palmerpenguins)
+library(ggpubr)
+library(broom)
+```
+
+## Rank-based test example (Mann-Whitney U)
+
+```{r}
+set.seed(1414)
+gp_1 <- sample.int(20, size=15, replace=TRUE)
+
+set.seed(1424)
+gp_2 <- sample.int(30, size=15, replace=TRUE)
+
+hist(gp_2)
+```
+Reasons to use a rank-based test:
+1. Not clearly normally distributed from exploratory histograms
+2. Somewhat small sample size (n = 15 for each)
+3. I’ve decided that ranks (or, medians) are a more valuable metric to compare for these data.
+
+Mann-Whitney U
+Is there a significant difference in ranks (medians) between gp_1 and gp_2?
+```{r}
+my_mwu <- wilcox.test(gp_1, gp_2)
+```
+## Simple Linear Regression
+
+### A. Look at the data!
+```{r}
+ggplot(data=penguins, aes(x=flipper_length_mm, y=body_mass_g))+
+  geom_point()
+```
+
+Ask:
+1. Does it look like a linear relationship makes sense?
+2. Do we have any concerns about modeling as a linear relationship?
+3. Any notable outliers?
+4. Initial thoughts about homoscedasticity (explored more later)?
+
+### B. Model it
+
+```{r}
+penguin_lm <- lm(body_mass_g ~ flipper_length_mm, data=penguins)
+summary(penguin_lm)
+```
+
+### C. Access model outputs
+
+```{r}
+penguin_lm_tidy <- broom::tidy(penguin_lm) #tidy, dataframe output
+
+#get intercept
+penguin_int <- penguin_lm_tidy$estimate[1]
+
+#get flipper length coefficient
+penguin_coef <- penguin_lm_tidy$estimate[2]
+
+#metrics at a glance
+penguin_lm_out <- broom::glance(penguin_lm)
+penguin_lm_out
+```
+
+### D. Explore model assumptions
+
+```{r}
+plot(penguin_lm)
+```
+
+### E. Visualize the model
+
+```{r}
+ggplot(data=penguins, aes(x=flipper_length_mm, y=body_mass_g))+
+  geom_point(size=2)+
+  geom_smooth(method="lm",
+              color="red",
+              size=0.5,
+              fill="gray10",
+              alpha=0.5)+
+  theme_light()+
+  ggpubr::stat_regline_equation(label.x=180, label.y=5700)
+```
+
+### F. Find Pearson's *r* for correlation
+
+```{r}
+penguins_cor <- cor.test(penguins$flipper_length_mm, penguins$body_mass_g)
+penguins_cor
+```
+
